@@ -230,10 +230,30 @@ install-openebs() {
 
 setup-ovs-cni() {
   # todo: install openvswitch, create bridges, install ovs cni
+  sudo apt-get update
+  sudo apt-get install openvswitch-switch
+
+  # create ovs bridges which are then used by ovs-cni
+  sudo ovs-vsctl --may-exist add-br n2br
+  sudo ovs-vsctl --may-exist add-br n3br
+  sudo ovs-vsctl --may-exist add-br n4br
+
+  # install ovs-cni
+  # install cluster-network-addons operator
+  kubectl apply -f https://github.com/kubevirt/cluster-network-addons-operator/releases/download/v0.89.1/namespace.yaml
+  kubectl apply -f https://github.com/kubevirt/cluster-network-addons-operator/releases/download/v0.89.1/network-addons-config.crd.yaml 
+  kubectl apply -f https://github.com/kubevirt/cluster-network-addons-operator/releases/download/v0.89.1/operator.yaml
+
+  kubectl apply -f https://gist.githubusercontent.com/niloysh/1f14c473ebc08a18c4b520a868042026/raw/d96f07e241bb18d2f3863423a375510a395be253/network-addons-config.yaml
+  
+  kubectl wait networkaddonsconfig cluster --for condition=Available
+
+
 }
 
 configure-open5gs() {
   # todo: setup venv, add admin account, insert subscribers
+  sleep 1
 }
 
 # run-as-root
@@ -248,3 +268,4 @@ install-cni
 install-multus
 install-helm
 install-openebs
+setup-ovs-cni
