@@ -28,7 +28,7 @@ timer-sec(){
 install-packages() {
   sudo apt-get update
   sudo apt-get install -y vim tmux git curl iproute2 iputils-ping iperf3 tcpdump python3-pip
-  sudo pip3 install virtualenv
+  sudo pip3 install -y virtualenv
 }
 
 # Based on https://stackoverflow.com/a/53463162/9346339
@@ -78,7 +78,7 @@ install-containerd() {
           cecho "GREEN" "Installing containerd ..."
           # Add Docker's official GPG key:
           sudo apt-get update
-          sudo apt-get install ca-certificates curl gnupg
+          sudo apt-get install -y ca-certificates curl gnupg
           sudo install -m 0755 -d /etc/apt/keyrings
           curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
           sudo chmod a+r /etc/apt/keyrings/docker.gpg
@@ -90,7 +90,7 @@ install-containerd() {
             sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
           sudo apt-get update
-          sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+          sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
           sudo mkdir -p /etc/containerd
           sudo bash -c 'containerd config default > /etc/containerd/config.toml'
           sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
@@ -191,7 +191,7 @@ install-multus() {
   else
     cecho "GREEN" "Installing Multus as meta CNI ..."
     git -C build/multus-cni pull || git clone https://github.com/k8snetworkplumbingwg/multus-cni.git build/multus-cni
-    cd multus-cni
+    cd build/multus-cni
     cat ./deployments/multus-daemonset-thick.yml | kubectl apply -f -
     timer-sec 30
     kubectl wait pods -n kube-system  -l app=multus --for condition=Ready --timeout=120s
@@ -220,40 +220,47 @@ install-helm() {
 }
 
 install-openebs() {
-  helm repo add openebs https://openebs.github.io/charts
-  helm repo update
-  helm install openebs --namespace openebs openebs/openebs --create-namespace
+  if kubectl get pods -n openebs -l app=openebs | grep -q '1/1'; then
+    cecho "YELLOW" "OpenEBS is already running. Skipping installation."
+  else
+    cecho "GREEN" "Installing OpenEBS for storage management ..."
+    helm repo add openebs https://openebs.github.io/charts
+    helm repo update
+    helm upgrade --install openebs --namespace openebs openebs/openebs --create-namespace
 
-  # patch k8s storageclass to make openebs-hostpath as default
-  kubectl patch storageclass openebs-hostpath -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+    # patch k8s storageclass to make openebs-hostpath as default
+    kubectl patch storageclass openebs-hostpath -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+  fi
 }
 
 setup-ovs-cni() {
-  # todo: install openvswitch, create bridges, install ovs cni
-  sudo apt-get update
-  sudo apt-get install openvswitch-switch
+  if [ -x "$(command -v ovs-vsctl)" ]; then
+    cecho "YELLOW" "OpenVSwitch is already installed."
+  else
+    cecho "GREEN" "Installing OpenVSwitch ..."
+    sudo apt-get update
+    sudo apt-get install openvswitch-switch
+  fi
 
-  # create ovs bridges which are then used by ovs-cni
+  cecho "GREEN" "Configuring bridges for use by ovs-cni ..."
   sudo ovs-vsctl --may-exist add-br n2br
   sudo ovs-vsctl --may-exist add-br n3br
   sudo ovs-vsctl --may-exist add-br n4br
 
   # install ovs-cni
   # install cluster-network-addons operator
+  cecho "GREEN" "Installing ovs-cni ..."
+
   kubectl apply -f https://github.com/kubevirt/cluster-network-addons-operator/releases/download/v0.89.1/namespace.yaml
   kubectl apply -f https://github.com/kubevirt/cluster-network-addons-operator/releases/download/v0.89.1/network-addons-config.crd.yaml 
   kubectl apply -f https://github.com/kubevirt/cluster-network-addons-operator/releases/download/v0.89.1/operator.yaml
 
   kubectl apply -f https://gist.githubusercontent.com/niloysh/1f14c473ebc08a18c4b520a868042026/raw/d96f07e241bb18d2f3863423a375510a395be253/network-addons-config.yaml
   
+  timer-sec 30
   kubectl wait networkaddonsconfig cluster --for condition=Available
 
 
-}
-
-configure-open5gs() {
-  # todo: setup venv, add admin account, insert subscribers
-  sleep 1
 }
 
 # run-as-root
