@@ -28,7 +28,7 @@ timer-sec(){
 install-packages() {
   sudo apt-get update
   sudo apt-get install -y vim tmux git curl iproute2 iputils-ping iperf3 tcpdump python3-pip
-  sudo pip3 install -y virtualenv
+  sudo pip3 install virtualenv
 }
 
 # Based on https://stackoverflow.com/a/53463162/9346339
@@ -155,7 +155,7 @@ create-k8s-cluster() {
     cecho "YELLOW" "A Kubernetes cluster already exists. Skipping cluster creation."
   else
     cecho "GREEN" "Creating k8s cluster ..."
-    sudo kubeadm init --pod-network-cidr=10.244.0.0/16
+    sudo kubeadm init --config kubeadm-config.yaml
 
     # Setup kubectl without sudo
     mkdir -p ${HOME}/.kube

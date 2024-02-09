@@ -40,6 +40,17 @@ cecho(){
 }
 
 
+uninstall_docker() {
+  cecho "RED" "Uninstalling docker ..."
+  if [ -x "$(command -v docker)" ]; then
+    sudo docker image prune -a
+    sudo systemctl restart docker
+    sudo apt purge -y docker-engine docker docker.io docker-ce docker-ce-cli containerd containerd.io runc --allow-change-held-packages
+  else
+    cecho "YELLOW" "Docker is not installed."
+  fi
+}
+
 uninstall_containerd() {
   cecho "RED" "Uninstalling containerd ..."
   if [ -x "$(command -v containerd)" ]; then
@@ -56,23 +67,31 @@ uninstall_containerd() {
 uninstall_k8s() {
   cecho "RED" "Uninstalling Kubernetes components (kubectl, kubeadm, kubelet)..."
   if [ -x "$(command -v kubectl)" ] && [ -x "$(command -v kubeadm)" ] && [ -x "$(command -v kubelet)" ]; then
-    sudo apt-get remove --purge -y --allow-change-held-packages kubeadm kubectl kubelet 
+    sudo apt-get remove --purge -y --allow-change-held-packages kubeadm kubectl kubelet kubernetes-cni kube* 
     cecho "GREEN" "Kubernetes components have been deleted."
   else
     cecho "YELLOW" "Kubernetes components (kubectl, kubeadm, kubelet) are not installed."
   fi
+
 }
 
 reset_k8s_cluster(){
   cecho "RED" "Deleting Kubernetes cluster..."
   if [ -f "/etc/kubernetes/admin.conf" ]; then
     sudo kubeadm reset -f -q
-    sudo rm -rf /etc/kubernetes
-    rm -rf ${HOME}/.kube
     cecho "GREEN" "Kubernetes cluster has been deleted."
   else
     cecho "YELLOW" "Kubernetes cluster is not running."
   fi
+
+  sudo rm -rf /etc/kubernetes
+  sudo rm -rf ${HOME}/.kube
+  sudo rm -rf /var/lib/kubelet/
+  sudo rm -rf /var/lib/etcd
+  sudo rm -rf 
+  sudo rm -rf /etc/cni /etc/kubernetes /var/lib/dockershim /var/lib/etcd /var/lib/kubelet /var/lib/etcd2/ /var/run/kubernetes 
+  sudo rm -rf /var/lib/docker /etc/docker /var/run/docker.sock
+  sudo rm -f /etc/apparmor.d/docker /etc/systemd/system/etcd* 
 }
 
 uninstall_cni() {
@@ -83,6 +102,8 @@ uninstall_cni() {
   else 
     cecho "YELLOW" "Flannel CNI is not installed."
   fi
+  cecho "RED" "Removing CNI configuration files ..."
+  sudo rm -rf /etc/cni
 }
 
 uninstall_helm() {
@@ -142,7 +163,7 @@ uninstall_multus() {
 cleanup() {
   cecho "RED" "Cleaning up build directories and redundant packages ..."
   sudo rm -rf build
-  sudo apt-get autoremove
+  sudo apt-get -y autoremove
 }
 
 remove_ovs_cni
@@ -153,6 +174,7 @@ uninstall_cni
 reset_k8s_cluster
 uninstall_k8s
 uninstall_containerd
+uninstall_docker
 cleanup
 
 cecho "GREEN" "Uninstallation completed."
