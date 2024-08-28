@@ -22,3 +22,16 @@ Then remove the containerd configuration and restart containerd.
 sudo rm /etc/containerd/config.toml
 systemctl restart containerd
 ```
+
+## Error writing to crisocket
+![](images/error-crisocket.png)
+
+This can happen if you had a previous installation of Kubernetes.
+Reset kubeadm and cleanup remnants of previous installation, as follows:
+```
+sudo kubeadm reset
+sudo rm -rf $HOME/.kube
+sudo rm -rf /etc/cni/net.d/*
+sudo rm -rf /var/lib/etcd/
+```
+Then run `install.sh` again. It after installation, kubernetes pods show as pending, do a reboot.

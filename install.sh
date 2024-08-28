@@ -239,7 +239,7 @@ setup-ovs-cni() {
   else
     cecho "GREEN" "Installing OpenVSwitch ..."
     sudo apt-get update
-    sudo apt-get install openvswitch-switch
+    sudo apt-get install -y openvswitch-switch
   fi
 
   cecho "GREEN" "Configuring bridges for use by ovs-cni ..."
