@@ -43,3 +43,11 @@ If you see an error indicating that the scheduler ran out of IP ranges, perform 
 sudo ./cleanup.sh
 ```
 This will reset any leftover configurations. Afterward, rerun install.sh to set up the cluster again.
+
+## Kubectl only works with sudo
+![kubectl-sudo](images/sudo-error.png)
+
+Copy the Kubernetes admin.conf file to your home directory using
+```bash
+sudo ./run-kubectl-without-sudo.sh
+```
