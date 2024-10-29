@@ -266,19 +266,51 @@ setup-ovs-cni() {
   timer-sec 30
   kubectl wait networkaddonsconfig cluster --for condition=Available
 
-
 }
 
-# run-as-root
-install-packages
-disable-swap
-disable-firewall
-setup-k8s-networking
-install-containerd
-install-k8s
-create-k8s-cluster
-install-cni
-install-multus
-install-helm
-install-openebs
-setup-ovs-cni
+setup-ovs-bridges() {
+  if [ -x "$(command -v ovs-vsctl)" ]; then
+    cecho "YELLOW" "OpenVSwitch is already installed."
+  else
+    cecho "GREEN" "Installing OpenVSwitch ..."
+    sudo apt-get update
+    sudo apt-get install -y openvswitch-switch
+  fi
+
+  cecho "GREEN" "Configuring bridges for use by ovs-cni ..."
+  sudo ovs-vsctl --may-exist add-br n2br
+  sudo ovs-vsctl --may-exist add-br n3br
+  sudo ovs-vsctl --may-exist add-br n4br
+}
+
+show-join-command-info() {
+  cecho "GREEN" "Worker node configured ..."
+  cecho "YELLOW" "Run worker-join-token.sh on the master node, and run the output (with sudo) on each worker node"
+}
+
+# Check for --worker flag
+if [[ "$1" == "--worker" ]]; then
+    cecho "YELLOW" "Setting up node as Kubernetes worker node ..."
+    install-packages
+    disable-swap
+    disable-firewall
+    setup-k8s-networking
+    install-containerd
+    install-k8s
+    setup-ovs-bridges
+    show-join-command-info
+else
+    cecho "YELLOW" "Setting up node as Kubernetes master node ..."
+    install-packages
+    disable-swap
+    disable-firewall
+    setup-k8s-networking
+    install-containerd
+    install-k8s
+    create-k8s-cluster
+    install-cni
+    install-multus
+    install-helm
+    install-openebs
+    setup-ovs-cni
+fi
