@@ -80,7 +80,7 @@ install-containerd() {
           sudo apt-get update
           sudo apt-get install -y ca-certificates curl gnupg
           sudo install -m 0755 -d /etc/apt/keyrings
-          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --yes --dearmor -o /etc/apt/keyrings/docker.gpg
           sudo chmod a+r /etc/apt/keyrings/docker.gpg
 
           # Add the repository to Apt sources:
@@ -92,7 +92,7 @@ install-containerd() {
           sudo apt-get update
           sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
           sudo mkdir -p /etc/containerd
-          sudo bash -c 'containerd config default > /etc/containerd/config.toml'
+          yes | sudo bash -c 'containerd config default > /etc/containerd/config.toml'
           sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
           sudo systemctl enable containerd
           sudo systemctl restart containerd
@@ -140,12 +140,12 @@ install-k8s() {
     sudo apt-get update
     # apt-transport-https may be a dummy package; if so, you can skip that package
     sudo apt-get install -y apt-transport-https ca-certificates curl gpg
-    curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+    curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | sudo gpg --yes --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
     # This overwrites any existing configuration in /etc/apt/sources.list.d/kubernetes.list
     echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
 
     sudo apt-get update
-    sudo apt-get install -y kubelet kubeadm kubectl
+    sudo apt-get install -y --allow-change-held-packages kubelet kubeadm kubectl
     sudo apt-mark hold kubelet kubeadm kubectl
   fi
 }
@@ -155,20 +155,26 @@ create-k8s-cluster() {
     cecho "YELLOW" "A Kubernetes cluster already exists. Skipping cluster creation."
   else
     cecho "GREEN" "Creating k8s cluster ..."
-    sudo kubeadm init --config kubeadm-config.yaml
+    
+    # Run kubeadm init and check if it succeeds
+    if sudo kubeadm init --config kubeadm-config.yaml; then
+      # Setup kubectl without sudo
+      mkdir -p ${HOME}/.kube
+      sudo cp -i /etc/kubernetes/admin.conf ${HOME}/.kube/config
+      sudo chown $(id -u):$(id -g) ${HOME}/.kube/config
 
-    # Setup kubectl without sudo
-    mkdir -p ${HOME}/.kube
-    sudo cp -i /etc/kubernetes/admin.conf ${HOME}/.kube/config
-    sudo chown $(id -u):$(id -g) ${HOME}/.kube/config
+      # Wait for cluster readiness
+      timer=60
+      cecho "YELLOW" "Waiting $timer secs for cluster to be ready"
+      timer-sec $timer
 
-    timer=60
-    cecho "YELLOW" "Waiting $timer secs for cluster to be ready"
-    timer-sec $timer
-
-    # Remove NoSchedule taint from all nodes
-    cecho "GREEN" "Allowing scheduling pods on master node ..."
-    kubectl taint nodes --all node-role.kubernetes.io/control-plane:NoSchedule-
+      # Remove NoSchedule taint from all nodes
+      cecho "GREEN" "Allowing scheduling pods on master node ..."
+      kubectl taint nodes --all node-role.kubernetes.io/control-plane:NoSchedule-
+    else
+      cecho "RED" "Failed to initialize Kubernetes cluster. Please check the logs for errors."
+      exit
+    fi
   fi
 }
 

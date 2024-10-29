@@ -29,9 +29,6 @@ systemctl restart containerd
 This can happen if you had a previous installation of Kubernetes.
 Reset kubeadm and cleanup remnants of previous installation, as follows:
 ```
-sudo kubeadm reset
-sudo rm -rf $HOME/.kube
-sudo rm -rf /etc/cni/net.d/*
-sudo rm -rf /var/lib/etcd/
+sudo ./cleanup.sh
 ```
 Then run `install.sh` again. It after installation, kubernetes pods show as pending, do a reboot.
