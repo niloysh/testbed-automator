@@ -20,6 +20,10 @@ sudo ./install.sh
 ```
 **Note**: Ensure you have sudo permissions. Run scripts as a regular user (not as root).
 
+The `install.sh` script should take approximately 5 mintues to run to completion. On successful deployment, you should see all pods in **Running** state as shown below.
+
+![successful-deployment](images/successful-deployment.png)
+
 # Usage
 Descriptions of the scripts in this repo are given below.
 
