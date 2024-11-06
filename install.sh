@@ -198,7 +198,7 @@ install-multus() {
     cecho "GREEN" "Installing Multus as meta CNI ..."
     git -C build/multus-cni pull || git clone https://github.com/k8snetworkplumbingwg/multus-cni.git build/multus-cni
     cd build/multus-cni
-    cat ./deployments/multus-daemonset-thick.yml | kubectl apply -f -
+    cat ./deployments/multus-daemonset.yml | kubectl apply -f -
     timer-sec 30
     kubectl wait pods -n kube-system  -l app=multus --for condition=Ready --timeout=120s
   fi
