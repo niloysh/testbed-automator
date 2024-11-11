@@ -164,7 +164,7 @@ create-k8s-cluster() {
       sudo chown $(id -u):$(id -g) ${HOME}/.kube/config
 
       # Wait for cluster readiness
-      timer=60
+      timer=10
       cecho "YELLOW" "Waiting $timer secs for cluster to be ready"
       timer-sec $timer
 
@@ -185,7 +185,7 @@ install-cni() {
   else
     cecho "GREEN" "Installing Flannel as primary CNI ..."
     kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
-    timer-sec 60
+    timer-sec 10
     kubectl wait pods -n kube-flannel  -l app=flannel --for condition=Ready --timeout=120s
   fi
 }
@@ -199,7 +199,7 @@ install-multus() {
     git -C build/multus-cni pull || git clone https://github.com/k8snetworkplumbingwg/multus-cni.git build/multus-cni
     cd build/multus-cni
     cat ./deployments/multus-daemonset.yml | kubectl apply -f -
-    timer-sec 30
+    timer-sec 10
     kubectl wait pods -n kube-system  -l app=multus --for condition=Ready --timeout=120s
   fi
 }
@@ -263,7 +263,7 @@ setup-ovs-cni() {
 
   kubectl apply -f https://gist.githubusercontent.com/niloysh/1f14c473ebc08a18c4b520a868042026/raw/d96f07e241bb18d2f3863423a375510a395be253/network-addons-config.yaml
   
-  timer-sec 30
+  timer-sec 10
   kubectl wait networkaddonsconfig cluster --for condition=Available
 
 }
@@ -314,3 +314,5 @@ else
     install-openebs
     setup-ovs-cni
 fi
+
+source run-kubectl-without-sudo.sh

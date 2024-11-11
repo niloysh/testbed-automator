@@ -11,30 +11,28 @@
 # Notes: This script is designed for use with Ubuntu 22.04.
 # Reset Kubernetes using kubeadm
 #!/bin/bash
-
-LOGFILE="cleanup.log"
-echo "Resetting Kubernetes and cleaning up resources..." | tee -a "$LOGFILE"
+echo "Resetting Kubernetes and cleaning up resources..."
 
 # Reset Kubernetes using kubeadm and log output
-echo "Running kubeadm reset..." | tee -a "$LOGFILE"
-if ! sudo kubeadm reset -f >> "$LOGFILE" 2>&1; then
-    echo "kubeadm reset failed, proceeding with manual cleanup..." | tee -a "$LOGFILE"
+echo "Running kubeadm reset..."
+if ! sudo kubeadm reset -f; then
+    echo "kubeadm reset failed, proceeding with manual cleanup..."
 fi
 
 # Remove kubeconfig directory
-echo "Removing .kube directory..." | tee -a "$LOGFILE"
-sudo rm -rf $HOME/.kube >> "$LOGFILE" 2>&1
+echo "Removing .kube directory..."
+sudo rm -rf $HOME/.kube
 
 # Remove CNI network configurations
-echo "Cleaning up CNI network configurations..." | tee -a "$LOGFILE"
-sudo rm -rf /etc/cni/net.d/* >> "$LOGFILE" 2>&1
+echo "Cleaning up CNI network configurations..."
+sudo rm -rf /etc/cni/net.d/*
 
 # Remove etcd data directory
-echo "Removing etcd data directory..." | tee -a "$LOGFILE"
-sudo rm -rf /var/lib/etcd/ >> "$LOGFILE" 2>&1
+echo "Removing etcd data directory..."
+sudo rm -rf /var/lib/etcd/
 
 # Clean up flannel IP remnants
-echo "Cleaning up flannel IP remnants..." | tee -a "$LOGFILE"
-sudo rm -rf /var/lib/cni/* >> "$LOGFILE" 2>&1
+echo "Cleaning up flannel IP remnants..."
+sudo rm -rf /var/lib/cni/*
 
-echo "Kubernetes reset and cleanup completed." | tee -a "$LOGFILE"
+echo "Kubernetes reset and cleanup completed."
