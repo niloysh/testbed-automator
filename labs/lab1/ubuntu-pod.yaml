@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ubuntu
+  labels:
+    app: ubuntu
+spec:
+  containers:
+  - image: ghcr.io/niloysh/toolbox:v1.0.0
+    command:
+      - "sleep"
+      - "604800"
+    imagePullPolicy: IfNotPresent
+    name: ubuntu
+  restartPolicy: Always

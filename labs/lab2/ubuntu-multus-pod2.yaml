@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ubuntu-multus2
+  annotations:
+    k8s.v1.cni.cncf.io/networks: '[ { "name": "secondary-network", "ips": ["10.10.1.12/24"] } ]'
+  namespace: workshop
+spec:
+  containers:
+  - name: ubuntu
+    image: ghcr.io/niloysh/toolbox:v1.0.0
+    command:
+      - "/bin/sh"
+      - "-c"
+      - "sleep 604800"  # Keep the pod running for a week
+    imagePullPolicy: IfNotPresent

@@ -37,10 +37,10 @@ sudo ovs-vsctl show
 ## 2. Create Network Attachment Definitions (NAD) with Multus
 Network Attachment Definitions (NADs) allow you to add secondary network interfaces to Kubernetes pods using Multus. Here, we will define a NAD to add an additional network interface to an Ubuntu pod.
 
-### Step 1: Create a simple NAD
-To define an additional network for the pods, save the following YAML as secondary-network.yaml:
+![multus](../../images/multus.png)
 
-In the yaml, we will associate our secondary interface with the OVS bridge we just created.
+### 2a: Create a simple NAD
+To define an additional network for the pods, we will use `secondary-network.yaml` which will associate our secondary interface with the OVS bridge we just created.
 
 ```yaml
 apiVersion: k8s.cni.cncf.io/v1
@@ -62,11 +62,14 @@ spec:
 Apply the NAD
 ```bash
 kubectl apply -f secondary-network.yaml
+```
+You can verify whether they have been deployed using:
+```
 kubectl get network-attachment-definitions -n workshop
 ```
-### Step 2: Deploy an Ubuntu Pod with a Secondary Interface
+### 2b: Deploy an Ubuntu Pod with a Secondary Interface
 
-To attach this secondary network to a pod, create the following YAML file named ubuntu-multus-pod.yaml:
+To attach this secondary network to a pod, look at the following YAML file named `ubuntu-multus-pod.yaml`:
 
 ```yaml
 apiVersion: v1
@@ -87,24 +90,28 @@ spec:
     imagePullPolicy: IfNotPresent
 ```
 
-Deploy the pod:
+Deploy the pod as follows:
 
 ```bash
 kubectl apply -f ubuntu-multus-pod.yaml
+```
+Verify that the pod is deployed and running as follows:
+
+```
 kubectl get pods -n workshop
 ```
 
-### Step 3: Verify the Secondary Interface
+### 2c: Verify the Secondary Interface
 Once the pod is running, verify the secondary interface
 ```bash
 kubectl exec -it -n workshop ubuntu-multus -- ip addr
 ```
-You should see an additional interface besides the default, with an IP address as specified in secondary-network.yaml.
+You should see an additional interface `net1` besides the default `eth0`, with an IP address `10.10.1.11` as specified in `secondary-network.yaml`.
 
 ## 3. Testing Connectivity between Pods
 
-### Step 1: Deploy a second Ubuntu Pod
-Create another pod with a similar configuration, but different IP addresses. Save the following as ubuntu-multus-pod2.yaml:
+### 3a: Deploy a second Ubuntu Pod
+Let's create another pod with a similar configuration, but different IP addresses. Look athe the `ubuntu-multus-pod2.yaml` file. Here the `metadata -> annotations -> k8s.v1.cni.cncf.io/networks -> ips` has been changed to `10.10.1.12`:
 
 
 ```yaml
@@ -128,12 +135,19 @@ spec:
 Apply the configuration
 ```bash
 kubectl apply -f ubuntu-multus-pod2.yaml
+
+```
+Ensure the pod is up and running with:
+
+```
 kubectl get pods -n workshop
 ```
 
-### Step 2: Verify connectivity
+### 3b: Verify connectivity
 
-Ping the IP of ubuntu-multus2's br0 interface:
+![multus-ping](../../images/multus-ping.png)
+
+Ping the IP of `ubuntu-multus2`'s secondary interface from the first multus pod:
 ```bash
 kubectl exec -it ubuntu-multus -n workshop -- ping 10.10.1.12 -c 4
 ```

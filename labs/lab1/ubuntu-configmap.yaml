@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ubuntu-config
+  namespace: workshop
+data:
+  MESSAGE: "Hello from ConfigMap!"
+  SLEEP_DURATION: "604800"
