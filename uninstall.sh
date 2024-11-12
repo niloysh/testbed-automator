@@ -160,7 +160,7 @@ uninstall_multus() {
   fi
 }
 
-cleanup() {
+clear-remnants() {
   cecho "RED" "Cleaning up build directories and redundant packages ..."
   sudo rm -rf build
   sudo apt-get -y autoremove
@@ -175,8 +175,10 @@ reset_k8s_cluster
 uninstall_k8s
 uninstall_containerd
 uninstall_docker
-cleanup
+clear-remnants
 
-source cleanup.sh
+
+SCRIPT_DIRECTORY="$(dirname $(realpath "$0"))"
+source $SCRIPT_DIRECTORY/cleanup.sh
 
 cecho "GREEN" "Uninstallation completed."

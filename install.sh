@@ -315,4 +315,7 @@ else
     setup-ovs-cni
 fi
 
-source run-kubectl-without-sudo.sh
+SCRIPT_DIRECTORY="$(dirname $(realpath "$0"))"
+source $SCRIPT_DIRECTORY/run-kubectl-without-sudo.sh
+
+./increase-fsnotify-limits.sh
