@@ -1,17 +1,32 @@
 #!/bin/bash
-#
-# Description: This script is designed to deploy the 5G testbed at UWaterloo.
-# Author: Niloy Saha
-# Date: 24/10/2023
-# Version: 1.0
-# Usage: Please ensure that you run this script as ROOT or with ROOT permissions.
-# Notes: This script is designed for use with Ubuntu 22.04.
-# ==============================================================================
+
+WORKING_DIR="$(pwd)"
+
+print_subheader() {
+    echo -e "\e[1;36m--- $1 ---\e[0m"
+}
+
+print_header() {
+    echo -e "\n\e[1;34m############################### $1 ###############################\e[0m"
+}
+
+print_success() {
+    echo -e "\e[1;32m$1\e[0m"
+}
+
+print_error() {
+    echo -e "\e[1;31mERROR: $1\e[0m"
+}
+
+print_info() {
+    echo -e "\e[1;33mINFO: $1\e[0m"
+}
+
 
 
 run-as-root(){
   if [ "$EUID" -ne 0 ]
-  then cecho "RED" "This script must be run as ROOT"
+  then print_error "This script must be run as ROOT"
   exit
   fi
 }
@@ -27,28 +42,13 @@ timer-sec(){
 
 install-packages() {
   sudo apt-get update
-  sudo apt-get install -y vim tmux git curl iproute2 iputils-ping iperf3 tcpdump python3-pip
+  sudo apt-get install -y vim tmux git curl iproute2 iputils-ping iperf3 tcpdump python3-pip jq
   sudo pip3 install virtualenv
 }
 
-# Based on https://stackoverflow.com/a/53463162/9346339
-cecho(){
-    RED="\033[0;31m"
-    GREEN="\033[0;32m"  # <-- [0 means not bold
-    YELLOW="\033[1;33m" # <-- [1 means bold
-    CYAN="\033[1;36m"
-    # ... Add more colors if you like
-
-    NC="\033[0m" # No Color
-
-    # printf "${(P)1}${2} ${NC}\n" # <-- zsh
-    printf "${!1}${2} ${NC}\n" # <-- bash
-}
-
-
 # Disable Swap
 disable-swap() {
-    cecho "GREEN" "Disabling swap ..."
+    print_info "Disabling swap ..."
     if [ -n "$(swapon -s)" ]; then
         # Swap is enabled, disable it
         sudo swapoff -a
@@ -63,7 +63,7 @@ disable-swap() {
 }
 
 disable-firewall() {
-  cecho "YELLOW" "Disabling firewall ..."
+  print_info "Disabling firewall ..."
   sudo ufw disable
 }
 
@@ -73,9 +73,9 @@ disable-firewall() {
 install-containerd() {
   if [ -x "$(command -v containerd)" ]
   then
-          cecho "YELLOW" "Containerd is already installed."
+          print_info "Containerd is already installed."
   else
-          cecho "GREEN" "Installing containerd ..."
+          echo "Installing containerd ..."
           # Add Docker's official GPG key:
           sudo apt-get update
           sudo apt-get install -y ca-certificates curl gnupg
@@ -100,16 +100,16 @@ install-containerd() {
 
   # Check if Containerd is running
   if sudo systemctl is-active containerd &> /dev/null; then
-    cecho "GREEN" "Containerd is running :)"
+    print_success "Containerd is running :)"
   else
-    cecho "RED" "Containerd installation failed or is not running!"
+    print_error "Containerd installation failed or is not running!"
   fi
 }
 
 # Setup K8s Networking
 # Based on https://kubernetes.io/docs/setup/production-environment/container-runtimes/#forwarding-ipv4-and-letting-iptables-see-bridged-traffic
 setup-k8s-networking() {
-  cecho "GREEN" "Setting up Kubernetes networking ..."
+  echo "Setting up Kubernetes networking ..."
   # Load required kernel modules
   cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
 overlay
@@ -134,9 +134,9 @@ EOF
 # Install Kubernetes
 install-k8s() {
   if [ -x "$(command -v kubectl)" ] && [ -x "$(command -v kubeadm)" ] && [ -x "$(command -v kubelet)" ]; then
-    cecho "YELLOW" "Kubernetes components (kubectl, kubeadm, kubelet) are already installed."
+    print_info "Kubernetes components (kubectl, kubeadm, kubelet) are already installed."
   else
-    cecho "GREEN" "Installing Kubernetes components (kubectl, kubeadm, kubelet) ..."
+    print_info "Installing Kubernetes components (kubectl, kubeadm, kubelet) ..."
     sudo apt-get update
     # apt-transport-https may be a dummy package; if so, you can skip that package
     sudo apt-get install -y apt-transport-https ca-certificates curl gpg
@@ -152,9 +152,9 @@ install-k8s() {
 
 create-k8s-cluster() {
   if [ -f "/etc/kubernetes/admin.conf" ]; then
-    cecho "YELLOW" "A Kubernetes cluster already exists. Skipping cluster creation."
+    print_info "A Kubernetes cluster already exists. Skipping cluster creation."
   else
-    cecho "GREEN" "Creating k8s cluster ..."
+    print_info "Creating k8s cluster ..."
     
     # Run kubeadm init and check if it succeeds
     if sudo kubeadm init --config kubeadm-config.yaml; then
@@ -165,14 +165,14 @@ create-k8s-cluster() {
 
       # Wait for cluster readiness
       timer=10
-      cecho "YELLOW" "Waiting $timer secs for cluster to be ready"
+      print_info "Waiting $timer secs for cluster to be ready"
       timer-sec $timer
 
       # Remove NoSchedule taint from all nodes
-      cecho "GREEN" "Allowing scheduling pods on master node ..."
+      echo "Allowing scheduling pods on master node ..."
       kubectl taint nodes --all node-role.kubernetes.io/control-plane:NoSchedule-
     else
-      cecho "RED" "Failed to initialize Kubernetes cluster. Please check the logs for errors."
+      print_error "Failed to initialize Kubernetes cluster. Please check the logs for errors."
       exit
     fi
   fi
@@ -181,9 +181,9 @@ create-k8s-cluster() {
 # Install Flannel as CNI
 install-cni() {
   if kubectl get pods -n kube-flannel -l app=flannel | grep -q '1/1'; then
-    cecho "YELLOW" "Flannel is already running. Skipping installation."
+    print_info "Flannel is already running. Skipping installation."
   else
-    cecho "GREEN" "Installing Flannel as primary CNI ..."
+    print_info "Installing Flannel as primary CNI ..."
     kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
     timer-sec 10
     kubectl wait pods -n kube-flannel  -l app=flannel --for condition=Ready --timeout=120s
@@ -193,14 +193,15 @@ install-cni() {
 # Install Multus as meta CNI
 install-multus() {
   if kubectl get pods -n kube-system -l app=multus | grep -q '1/1'; then
-    cecho "YELLOW" "Multus is already running. Skipping installation."
+    print_info "Multus is already running. Skipping installation."
   else
-    cecho "GREEN" "Installing Multus as meta CNI ..."
+    print_info "Installing Multus as meta CNI ..."
     git -C build/multus-cni pull || git clone https://github.com/k8snetworkplumbingwg/multus-cni.git build/multus-cni
     cd build/multus-cni
     cat ./deployments/multus-daemonset.yml | kubectl apply -f -
     timer-sec 10
     kubectl wait pods -n kube-system  -l app=multus --for condition=Ready --timeout=120s
+    cd $WORKING_DIR
   fi
 }
 
@@ -210,7 +211,7 @@ install-helm() {
   HELM_VERSION=$(helm version --short 2> /dev/null)
 
   if [[ "$HELM_VERSION" != *"v3"* ]]; then
-    cecho "GREEN" "Helm 3 is not installed. Proceeding to install Helm ..."
+    print_info "Helm 3 is not installed. Proceeding to install Helm ..."
 
     # Install Helm prerequisites
     curl -s https://baltocdn.com/helm/signing.asc | gpg --dearmor | sudo tee /usr/share/keyrings/helm.gpg > /dev/null
@@ -221,15 +222,15 @@ install-helm() {
     sudo apt-get update
     sudo apt-get install helm
   else
-    cecho "YELLOW" "Helm 3 is already installed."
+    print_info "Helm 3 is already installed."
   fi
 }
 
 install-openebs() {
   if kubectl get pods -n openebs -l app=openebs | grep -q '1/1'; then
-    cecho "YELLOW" "OpenEBS is already running. Skipping installation."
+    print_info "OpenEBS is already running. Skipping installation."
   else
-    cecho "GREEN" "Installing OpenEBS for storage management ..."
+    print_info "Installing OpenEBS for storage management ..."
     helm repo add openebs https://openebs.github.io/charts
     helm repo update
     helm upgrade --install openebs --namespace openebs openebs/openebs --create-namespace
@@ -241,21 +242,21 @@ install-openebs() {
 
 setup-ovs-cni() {
   if [ -x "$(command -v ovs-vsctl)" ]; then
-    cecho "YELLOW" "OpenVSwitch is already installed."
+    print_info "OpenVSwitch is already installed."
   else
-    cecho "GREEN" "Installing OpenVSwitch ..."
+    print_info "Installing OpenVSwitch ..."
     sudo apt-get update
     sudo apt-get install -y openvswitch-switch
   fi
 
-  cecho "GREEN" "Configuring bridges for use by ovs-cni ..."
+  print_info "Configuring bridges for use by ovs-cni ..."
   sudo ovs-vsctl --may-exist add-br n2br
   sudo ovs-vsctl --may-exist add-br n3br
   sudo ovs-vsctl --may-exist add-br n4br
 
   # install ovs-cni
   # install cluster-network-addons operator
-  cecho "GREEN" "Installing ovs-cni ..."
+  print_info "Installing ovs-cni ..."
 
   kubectl apply -f https://github.com/kubevirt/cluster-network-addons-operator/releases/download/v0.89.1/namespace.yaml
   kubectl apply -f https://github.com/kubevirt/cluster-network-addons-operator/releases/download/v0.89.1/network-addons-config.crd.yaml 
@@ -270,27 +271,27 @@ setup-ovs-cni() {
 
 setup-ovs-bridges() {
   if [ -x "$(command -v ovs-vsctl)" ]; then
-    cecho "YELLOW" "OpenVSwitch is already installed."
+    print_info "OpenVSwitch is already installed."
   else
-    cecho "GREEN" "Installing OpenVSwitch ..."
+    print_info "Installing OpenVSwitch ..."
     sudo apt-get update
     sudo apt-get install -y openvswitch-switch
   fi
 
-  cecho "GREEN" "Configuring bridges for use by ovs-cni ..."
+  print_info "Configuring bridges for use by ovs-cni ..."
   sudo ovs-vsctl --may-exist add-br n2br
   sudo ovs-vsctl --may-exist add-br n3br
   sudo ovs-vsctl --may-exist add-br n4br
 }
 
 show-join-command-info() {
-  cecho "GREEN" "Worker node configured ..."
-  cecho "YELLOW" "Run worker-join-token.sh on the master node, and run the output (with sudo) on each worker node"
+  print_info "Worker node configured ..."
+  print_info "Run worker-join-token.sh on the master node, and run the output (with sudo) on each worker node"
 }
 
 # Check for --worker flag
 if [[ "$1" == "--worker" ]]; then
-    cecho "YELLOW" "Setting up node as Kubernetes worker node ..."
+    print_header "Setting up node as Kubernetes worker node"
     install-packages
     disable-swap
     disable-firewall
@@ -300,22 +301,63 @@ if [[ "$1" == "--worker" ]]; then
     setup-ovs-bridges
     show-join-command-info
 else
-    cecho "YELLOW" "Setting up node as Kubernetes master node ..."
+    
+    print_header "Set up node as Kubernetes master node"
+
+    print_header "Prepare node for Kubernetes Install (Automator Deployment [1/6])"
+
+    print_subheader "Install system packages"
     install-packages
+    print_success "System packages installed."
+
+    print_subheader "Setup Kubernetes configurations for networking"
     disable-swap
     disable-firewall
     setup-k8s-networking
+    print_success "Kubernetes configuraitons for networking done."
+
+    print_header "Install Container Runtime (Automator Deployment [2/6])"
+    print_subheader "Install containerd as Container Runtime"
     install-containerd
+    print_success "Container Runtime installed."
+
+    print_header "Install Kubernetes and create cluster (Automator Deployment [3/6])"
+    print_subheader "Install Kubernetes"
     install-k8s
+    print_success "Kubernetes installed."
+    print_subheader "Create single-node Kubernetes cluster"
     create-k8s-cluster
+    print_success "Kubernetes cluster created."
+
+    print_header "Install Multus and CNI for 5G networking (Automator Deployment [4/6])"
+    print_subheader "Install Flannel as primary CNI"
     install-cni
+    print_success "Flannel installed."
+
+    print_subheader "Install Multus as meta CNI"
     install-multus
-    install-helm
-    install-openebs
+    print_success "Multus installed."
+
+    
+    print_subheader "Install OVS-CNI as secondary CNI"
     setup-ovs-cni
+    print_success "OVS-CNI installed."
+
+    print_header "Setup Storage for Kubernetes using OpenEBS (Automator Deployment [5/6])"
+    print_subheader "Install Helm package manager for Kubernetes"
+    install-helm
+    print_success "Helm installed."
+    print_subheader "Install OpenEBS"
+    install-openebs
+    print_success "OpenEBS installed"
+    
 fi
 
+print_header "Running post installation scripts (Automator Deployment [6/6])"
+
+print_subheader "Enable running kubectl without sudo"
 SCRIPT_DIRECTORY="$(dirname $(realpath "$0"))"
 source $SCRIPT_DIRECTORY/run-kubectl-without-sudo.sh
 
+print_subheader "Increase fsnotify limits for kubectl logs"
 ./increase-fsnotify-limits.sh
