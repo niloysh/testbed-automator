@@ -2,7 +2,7 @@
 marp: true
 theme: default
 paginate: true
-size: 4:3
+# size: 4:3
 ---
 
 # Lab 2: Advanced Kubernetes Networking with Multus and OVS-CNI
@@ -96,9 +96,7 @@ metadata:
   name: ubuntu-multus
   annotations:
     k8s.v1.cni.cncf.io/networks: '[ 
-      { "name": "secondary-network", "ips": [ "10.10.1.11/24" ]  
-      } 
-    ]'
+      { "name": "secondary-network", "ips": [ "10.10.1.11/24" ]  } ]'
 ...
 ```
 
@@ -127,7 +125,7 @@ You should see an additional interface `net1` besides the default `eth0`, with a
 
 To test if our secondary interface is working, we can deploy a topology as follows using OVS-CNI. The secondary interface `net1` will connect both `ubuntu-multus` and `ubuntu-multus2` pods.
 
-![multus-ping](../../images/multus-ping.png)
+![w:700](../../images/multus-ping.png)
 
 ---
 

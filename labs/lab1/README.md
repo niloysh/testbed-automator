@@ -2,7 +2,7 @@
 marp: true
 theme: default
 paginate: true
-size: 4:3
+# size: 4:3
 ---
 
 
@@ -226,7 +226,7 @@ ConfigMaps are used to store configuration data separately from application code
 
 We will use ConfigMaps to store configurations for each network function (e.g., SMF, AMF) when we deploy our 5G core.
 
-![configmap](../../images/configmap.png)
+![w:700](../../images/configmap.png)
 
 ---
 
@@ -272,7 +272,7 @@ kubectl logs ubuntu-ws-cfg -n workshop
 # Deployment - Introduction
 Deployments manage a set of identical Pods (replicas) for scalability, high availability, and ease of updates.
 
-![deployment](../../images/deployment.png)
+![w:700](../../images/deployment.png)
 
 ---
 

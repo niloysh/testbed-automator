@@ -2,7 +2,7 @@
 marp: true
 theme: default
 paginate: true
-size: 4:3
+# size: 4:3
 ---
 # Testbed Automator Script Overview
 **Purpose**: Automates the setup and configuration of a testbed environment.
@@ -44,15 +44,13 @@ cd testbed-automator
 sudo ./install.sh
 ```
 
+---
+# Verify Deployment
+
 On completion, run `kubectl get pods -A` you should see:
 
 ![automator-install](images/automator-install.png)
 
----
-# Deploying `testbed-automator`
-
-1.	**Verify Deployment**: Ensure all pods are in the `RUNNING` state. This confirms that `testbed-automator` has been successfully deployed.
-
-2.	**Next Step**: After confirming deployment, proceed with [Lab 1](labs/lab1/README.md) to deepen your understanding of the tools you've just deployed.
+After confirming deployment, proceed with [Lab 1](labs/lab1/README.md) to deepen your understanding of the tools you've just deployed.
 
 
