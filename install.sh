@@ -24,10 +24,10 @@ print_info() {
 
 
 
-run-as-root(){
-  if [ "$EUID" -ne 0 ]
-  then print_error "This script must be run as ROOT"
-  exit
+check-root(){
+  if [[ $EUID -eq 0 ]]; then
+  echo "This script must NOT be run as root" 1>&2
+  exit 1
   fi
 }
 
@@ -288,6 +288,8 @@ show-join-command-info() {
   print_info "Worker node configured ..."
   print_info "Run worker-join-token.sh on the master node, and run the output (with sudo) on each worker node"
 }
+
+check-root  # script should NOT be run as ROOT
 
 # Check for --worker flag
 if [[ "$1" == "--worker" ]]; then
