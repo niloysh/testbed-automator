@@ -160,7 +160,7 @@ create-k8s-cluster() {
     if sudo kubeadm init --config kubeadm-config.yaml; then
       # Setup kubectl without sudo
       mkdir -p ${HOME}/.kube
-      sudo cp -i /etc/kubernetes/admin.conf ${HOME}/.kube/config
+      sudo cp /etc/kubernetes/admin.conf ${HOME}/.kube/config
       sudo chown $(id -u):$(id -g) ${HOME}/.kube/config
 
       # Wait for cluster readiness

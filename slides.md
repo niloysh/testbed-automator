@@ -41,8 +41,11 @@ You can use the `install.sh` script as follows:
 ```bash
 git clone https://github.com/niloysh/testbed-automator
 cd testbed-automator
-sudo ./install.sh
+./install.sh
 ```
+
+
+**Note**: Do NOT run the `install.sh` script as `sudo` or `root.` Run it as a regular user and provide the password when prompted.
 
 ---
 # Verify Deployment
