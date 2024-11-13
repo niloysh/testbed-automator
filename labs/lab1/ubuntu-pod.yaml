@@ -6,10 +6,10 @@ metadata:
     app: ubuntu
 spec:
   containers:
-  - image: ghcr.io/niloysh/toolbox:v1.0.0
+  - image: ghcr.io/niloysh/rogers-workshop:v1.0
     command:
       - "sleep"
       - "604800"
-    imagePullPolicy: IfNotPresent
+    imagePullPolicy: Always
     name: ubuntu
   restartPolicy: Always

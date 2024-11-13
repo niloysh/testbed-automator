@@ -8,7 +8,7 @@ metadata:
 spec:
   containers:
   - name: ubuntu
-    image: ghcr.io/niloysh/toolbox:v1.0.0
+    image: ghcr.io/niloysh/rogers-workshop:v1.0
     command:
       - "/bin/sh"
       - "-c"
