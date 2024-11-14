@@ -59,7 +59,7 @@ Network Attachment Definitions (NADs) allow you to add secondary network interfa
 
 In this lab, we will define a NAD to add an additional network interface to an Ubuntu pod.
 
-![multus](../../images/multus.png)
+![w:800](../../images/multus.png)
 
 ---
 
