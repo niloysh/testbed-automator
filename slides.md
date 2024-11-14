@@ -54,6 +54,6 @@ On completion, run `kubectl get pods -A` you should see:
 
 ![automator-install](images/automator-install.png)
 
-After confirming deployment, proceed with [Lab 1](labs/lab1/README.md) to deepen your understanding of the tools you've just deployed.
+After confirming deployment, proceed with [Lab 1](https://niloysh.github.io/testbed-automator/labs/lab1/README.md) to deepen your understanding of the tools you've just deployed.
 
 

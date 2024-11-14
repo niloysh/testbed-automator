@@ -160,4 +160,5 @@ kubectl exec -it ubuntu-multus -n workshop -- ping 10.10.1.12 -c 4
 You should see the pings going through.
 
 Congratulations! You have successfully configured multi-interface networking in Kubernetes using OVS-CNI. Now you are ready to deploy the 5G network!
+Continue to deploying the 5G network with [open5gs-k8s](https://niloysh.github.io/open5gs-k8s/slides.pdf).
 

@@ -304,4 +304,4 @@ kubectl get pods -l app=nginx -n workshop
 
 Congratulations, you are now familiar with some of the basic components of Kubernetes we will use for our 5G network deployment.
 
-Continue to the [next lab](../lab2/README.md) of this workshop.
+Continue to the [next lab](https://niloysh.github.io/testbed-automator/labs/lab2/README.md) of this workshop.
