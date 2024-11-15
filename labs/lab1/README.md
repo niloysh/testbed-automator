@@ -8,9 +8,9 @@ paginate: true
 
 # Lab 1: Kubernetes Basics
 
-In this lab, you will learn how to deploy containers, work with namespaces, set up services, use ConfigMaps, and create deployments in Kubernetes. 
+In this lab, you will learn how to deploy containers, work with namespaces, set up services, use configmaps, and create deployments in Kubernetes. 
 
-These skills will prepare you for deploying and managing applications, including those used in our 5G core network deployment.
+These skills will prepare you for deploying and managing applications, including the network functions (NFs) used in our 5G core network deployment.
 
 ---
 # Deploy a simple Container
@@ -24,42 +24,51 @@ For this lab, we will utilize the `ghcr.io/niloysh/rogers-workshop:v1.0` image, 
 # Pod
 Pods are the smallest deployable units of computing that you can create and manage in Kubernetes.
 
-A Pod is a group of one or more containers, with shared storage and network resources, and a specification for how to run the containers.
+A Pod is a group of one or more containers, with shared storage and network resources, and a specification for how to run the containers. Example applications running in Pods can be 5G network functions (NFs), web applications, etc.
 
 ![pod](../../images/pod.png)
 
 ---
 
-# The YAML manifest file
-Pods and other resources in Kubernetes can be deployed with a `YAML` manifest file. The `ubuntu-pod.yaml` file shown below deploys our `rogers-workshop` image as a pod.
+# Looking at Source Code
+
+Open the `testbed-automator` source code in the VSCode editor:
+```bash
+cd ~/testbed-automator
+code .
+```
+In the directory tree, navigate to `labs/lab1/ubuntu-pod.yaml`
+
+![w:800](../../images/vscode-2.png)
+
+---
+# The YAML manifest file (2/2)
+Pods and other resources in Kubernetes can be deployed with a `YAML` manifest file. 
+The `ubuntu-pod.yaml` file shown below deploys our `rogers-workshop` image as a pod.
 
 ```yaml
-apiVersion: v1
-kind: Pod
+kind: Pod  <==== Type of Kubernetes resource
 metadata:
-  name: ubuntu
+  name: ubuntu  <==== Name of the Kubernetes resource
   labels:
     app: ubuntu
 spec:
   containers:
-  - image: ghcr.io/niloysh/rogers-workshop:v1.0
-    command:
-      - "sleep"
-      - "604800"
+  - image: ghcr.io/niloysh/rogers-workshop:v1.0  <==== Container image
 ...
 ```
 ---
 
 # Deploy our first Pod
 
-We can deploy our pod as follows
+We can deploy our pod from the terminal as follows:
 ```bash
-cd labs/lab1
+cd ~/testbed-automator/labs/lab1
 kubectl apply -f ubuntu-pod.yaml
 ```
 This may take some time to download the Ubuntu image and then deploy the pod. To check the status of your pod, you can use `kubectl get pods`. 
 
-You should see output as below
+You should see output as below:
 
 ```
 NAME     READY   STATUS    RESTARTS   AGE
@@ -69,7 +78,7 @@ Eventually the status should show up as `Running.`
 
 ---
 # Using the pod
-We can start up an interactive shell in the container as follows:
+We can start up an interactive shell inside the container as follows:
 ```bash
 kubectl exec -it ubuntu -- /bin/bash
 ```
@@ -84,13 +93,16 @@ PING 8.8.8.8 (8.8.8.8) 56(84) bytes of data.
 2 packets transmitted, 2 received, 0% packet loss, time 1003ms
 rtt min/avg/max/mdev = 4.619/4.781/4.943/0.162 ms
 ```
+**Note**: Exit the shell inside the container by typing `exit`.
+
 ---
 
 # Namespaces - Introduction
+<style> img[alt~="center"] { display: block; margin: 0 auto; } </style>
 
 Namespaces allow you to organize and isolate resources within a Kubernetes cluster. Think of them as "virtual clusters" inside your main cluster, letting you separate environments or applications.
 
-![w:600](../../images/namespace.png)
+![w:600 center](../../images/namespace.png)
 
 So far we have deployed pods in the `default` namespace. Next, let's create a namespace for our workshop.
 
@@ -98,7 +110,7 @@ So far we have deployed pods in the `default` namespace. Next, let's create a na
 
 # Namespaces - Creation
 
-First, let's create a namespace called `workshop` where we can deploy our resources without cluttering the default namespace.
+Let's create a namespace called `workshop` where we can deploy our resources without cluttering the `default` namespace.
 
 To create the namespace, use the following command:
 ```bash
@@ -120,11 +132,11 @@ metadata:
   namespace: workshop
 ...
 ```
-Here, we have specified the `namespace` inside the `metadata`. Let's go ahead and deploy it with:
+We have specified the `namespace` inside the `metadata`. Let's go ahead and deploy it: 
 ```bash
 kubectl apply -f ubuntu-ws.yaml
 ```
-To check the status of our new pod, add `-n <namespace>` to the `kubectl get pods` command:
+To check the status of our new pod, add `-n <namespace>` to the `kubectl get pods`:
 ```bash
 kubectl get pods -n workshop
 ```
@@ -132,19 +144,18 @@ kubectl get pods -n workshop
 ---
 
 # Services - Introduction
+<style> img[alt~="center"] { display: block; margin: 0 auto; } </style>
 Services allow you to expose a set of Pods as a network service, making it possible for other resources to communicate with them. 
 
 In our 5G core network, network functions communicate with each other using services.
 
-![service](../../images/service.png)
+![w:900 center](../../images/service.png)
 
 ---
 
 # Services - Deploy an nginx Pod
-Let's deploy an `nginx` pod to serve HTTP traffic on port 80. 
-This will allow us to test our service.
+Let's deploy an `nginx` pod to serve HTTP traffic on port 80. This will allow us services. In VSCode, find `labs/lab1/nginx-pod.yaml`:
 ```yaml
-apiVersion: v1
 kind: Pod
 metadata:
   name: nginx
@@ -154,7 +165,7 @@ We can deploy it as follows:
 ```bash
 kubectl apply -f nginx-pod.yaml
 ```
-Use `kubectl get pods -n workshop`:
+Check the deployment status using `kubectl get pods -n workshop`:
 ```
 NAME        READY   STATUS    RESTARTS   AGE
 nginx       1/1     Running   0          92s
@@ -164,16 +175,14 @@ ubuntu-ws   1/1     Running   0          14m
 # Services - Expose nginx Pod
 Next, let's expose the Nginx pod with a ClusterIP service (the default type) to allow other pods in the cluster to reach it.
 
-Here's the YAML manifest for a ClusterIP service that will expose our Nginx pod internally within the workshop namespace:
+Find the `labs/lab1/nginx-service.yaml` file. This defines a service that will expose our Nginx pod internally within the workshop namespace.
 ```yaml
 apiVersion: v1
 kind: Service
 metadata:
   name: nginx-service
   namespace: workshop
-spec:
-  selector:
-    app: nginx
+...
   ports:
     - protocol: TCP
       port: 80
@@ -182,7 +191,7 @@ spec:
 ```
 ---
 # Services - Deploy the Service
-The `nginx-service.yaml` file contains the above yaml. We can apply it as follows:
+The `labs/lab1/nginx-service.yaml` file contains the above yaml. We can apply it as follows:
 ```bash
 kubectl apply -f nginx-service.yaml
 ```
@@ -200,29 +209,26 @@ We can see from the output that port `80` inside the pod is exposed to the clust
 ---
 
 # Services - Verify the Connection
-To test the service, you can use our `ubuntu` pod to `curl` the nginx-service and check if it is accessible. 
+To test the service, you can use our `ubuntu-ws` pod to `curl` the `nginx-service` and check if it is accessible. 
 
-
+Open up a bash shell inside the container:
 ```bash
 kubectl exec -n workshop -it ubuntu-ws -- /bin/bash
 ```
-This will open up a bash shell inside the container, as we have seen before, from where we can run
+From inside the container, try accessing the `nginx-service` on port `80`:
 ```
 curl nginx-service:80
 ```
-You should see
-```bash
-<!DOCTYPE html>
-<html>
-<head>
-<title>Welcome to nginx!</title>
-...
-```
+You should see a HTML document with the line `<title>Welcome to nginx!</title>`.
+
+**Tip**: Exit the container by typing `exit`.
+
+
 ---
 
 # ConfigMaps - Introduction
 
-ConfigMaps are used to store configuration data separately from application code. They allow you to manage environment-specific settings without altering your pod definitions.
+ConfigMaps are used to store configuration data separately from application code. They allow you to manage environment-specific settings without altering your container image.
 
 We will use ConfigMaps to store configurations for each network function (e.g., SMF, AMF) when we deploy our 5G core.
 
@@ -234,7 +240,7 @@ We will use ConfigMaps to store configurations for each network function (e.g., 
 
 Let's create a ConfigMap to store environment variables for our Ubuntu pod. This will store some basic configuration data, like a `MESSAGE` and a `SLEEP_DURATION`.
 
-The `ubuntu-configmap.yaml` contains the following content:
+The `labs/lab1/ubuntu-configmap.yaml` contains the following content:
 ```yaml
 apiVersion: v1
 kind: ConfigMap
@@ -250,7 +256,7 @@ kubectl apply -f ubuntu-configmap.yaml
 ---
 # ConfigMaps - Using them in a Pod
 
-Now, let's create a new pod that will use this configmap. Look at the `ubuntu-ws-cfg.yaml` file:
+Now, let's create a new pod that will use this configmap. Look at the `labs/lab1/ubuntu-ws-cfg.yaml` file:
 ```yaml
 env:
 - name: MESSAGE
@@ -277,7 +283,7 @@ Deployments manage a set of identical Pods (replicas) for scalability, high avai
 ---
 
 # Deployment - Creation
-Let's create a Deployment to manage 2 replicas of an `nginx` container. Look at the `nginx-deployment.yaml`:
+Let's create a Deployment to manage 2 replicas of an `nginx` container. Look at the `labs/lab1/nginx-deployment.yaml`:
 
 ```yaml
 apiVersion: apps/v1

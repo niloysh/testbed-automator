@@ -16,17 +16,18 @@ This setup is used in our 5G core network architectures to support traffic isola
 
 - **What is OVS?** A software-based switch enabling network connectivity in virtualized environments, such as VMs, containers, and physical devices.
 
-- **Importance in 5G:** SDN controllers like ONOS can be used to orchestrate and manage network slices in real-time, enabling the creation of isolated paths with specific Quality of Service (QoS) requirements for each slice.
+- **Importance in 5G:** Open vSwitch can be used alongside software-defined networking (SDN) controllers such as ONOS to enable slicing and traffic prioritization in the transport network.
 
 - **Container Networking with OVS-CNI:** OVS-CNI integrates OVS in Kubernetes, supporting multi-interface pods and advanced network setups.
 
 ---
 
 # Prerequisites
-Change into the lab2 directory, where you can find all required files for this lab.
+Change into the `lab2` directory, where you can find all required files for this lab.
 ```bash
-cd labs/lab2
+cd ~/testbed-automator/labs/lab2
 ```
+**Tip**: From any directory, you can go back one directory by using the `cd ..` command.
 Ensure that Multus and OVS-CNI are installed and configured in your Kubernetes cluster. Verify by running:
 ```bash
 kubectl get pods -A | grep -E 'multus|ovs'
@@ -55,17 +56,18 @@ sudo ovs-vsctl show
 ---
 
 # Create NADs with Multus
+<style> img[alt~="center"] { display: block; margin: 0 auto; } </style>
 Network Attachment Definitions (NADs) allow you to add secondary network interfaces to Kubernetes pods using Multus. 
 
 In this lab, we will define a NAD to add an additional network interface to an Ubuntu pod.
 
-![w:800](../../images/multus.png)
+![w:800 center](../../images/multus.png)
 
 ---
 
 # Create a simple NAD
 
-We will use `secondary-network.yaml` to create our NAD which will associate our secondary interface with the OVS bridge we just created.
+We will use `labs/lab2/secondary-network.yaml` to create our NAD which will associate our secondary interface with the OVS bridge we just created.
 
 ```yaml
 kind: NetworkAttachmentDefinition
@@ -87,7 +89,7 @@ kubectl get network-attachment-definitions -n workshop
 ---
 # Deploy Pod with a Secondary Interface
 
-Let's look at `ubuntu-multus-pod.yaml`:
+Let's look at `labs/lab2/ubuntu-multus-pod.yaml`:
 
 ```yaml
 apiVersion: v1
@@ -113,24 +115,27 @@ kubectl get pods -n workshop
 ---
 
 # Verify the Secondary Interface
-Once the pod is running, verify the secondary interface, by executing
+Once the pod is running, verify the secondary interface, by executing:
 ```bash
-kubectl exec -it -n workshop ubuntu-multus -- ip addr
+kubectl exec -it -n workshop ubuntu-multus -- ip a
 ```
+This runs the `ip a` command from inside the `ubuntu-multus` pod.
+
 You should see an additional interface `net1` besides the default `eth0`, with an IP address `10.10.1.11` as specified in `secondary-network.yaml`.
 
 ---
 
 # Testing Connectivity between Pods
+<style> img[alt~="center"] { display: block; margin: 0 auto; } </style>
 
 To test if our secondary interface is working, we can deploy a topology as follows using OVS-CNI. The secondary interface `net1` will connect both `ubuntu-multus` and `ubuntu-multus2` pods.
 
-![w:700](../../images/multus-ping.png)
+![w:800 center](../../images/multus-ping.png)
 
 ---
 
 # Deploy a second Ubuntu Pod
-Let's create another pod with a similar configuration, but different IP addresses. Look at the the `ubuntu-multus-pod2.yaml` file. Here the `metadata -> annotations -> k8s.v1.cni.cncf.io/networks -> ips` has been changed to `10.10.1.12`:
+Let's create another pod with a similar configuration, but different IP addresses. Look at the the `labs/lab2/ubuntu-multus-pod2.yaml` file. Here the `metadata -> annotations -> k8s.v1.cni.cncf.io/networks -> ips` has been changed to `10.10.1.12`:
 
 
 ```yaml
