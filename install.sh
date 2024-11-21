@@ -291,75 +291,107 @@ show-join-command-info() {
 
 check-root  # script should NOT be run as ROOT
 
-# Check for --worker flag
-if [[ "$1" == "--worker" ]]; then
-    print_header "Setting up node as Kubernetes worker node"
-    install-packages
-    disable-swap
-    disable-firewall
-    setup-k8s-networking
-    install-containerd
-    install-k8s
-    setup-ovs-bridges
-    show-join-command-info
-else
-    
-    print_header "Set up node as Kubernetes master node"
+main() {
+    if [[ "$1" == "--worker" ]]; then
+        setup_worker_node
+    else
+        setup_master_node
+    fi
+}
 
-    print_header "Prepare node for Kubernetes Install (Automator Deployment [1/6])"
+setup_worker_node() {
+    print_header "Setting up node as Kubernetes Worker Node"
 
-    print_subheader "Install system packages"
-    install-packages
-    print_success "System packages installed."
+    print_header "Prepare Node for Kubernetes Install (Automator Deployment [1/3])"
+    prepare_node_for_kubernetes
 
-    print_subheader "Setup Kubernetes configurations for networking"
-    disable-swap
-    disable-firewall
-    setup-k8s-networking
-    print_success "Kubernetes configuraitons for networking done."
-
-    print_header "Install Container Runtime (Automator Deployment [2/6])"
-    print_subheader "Install containerd as Container Runtime"
+    print_header "Install Container Runtime (Automator Deployment [2/3])"
     install-containerd
     print_success "Container Runtime installed."
 
-    print_header "Install Kubernetes and create cluster (Automator Deployment [3/6])"
-    print_subheader "Install Kubernetes"
+    print_header "Join Kubernetes Cluster (Automator Deployment [3/3])"
+    print_subheader "Install Kubernetes and Setup OVS Bridges"
     install-k8s
-    print_success "Kubernetes installed."
+    setup-ovs-bridges
+    print_success "Kubernetes and OVS Bridges configured."
+
+    print_subheader "Join the Worker Node to the Cluster"
+    show-join-command-info
+    print_success "Worker node setup complete."
+}
+
+setup_master_node() {
+    print_header "Setting up node as Kubernetes Master Node"
+    
+    print_header "Prepare Node for Kubernetes Install (Automator Deployment [1/6])"
+    prepare_node_for_kubernetes
+
+    print_header "Install Container Runtime (Automator Deployment [2/6])"
+    install-containerd
+    print_success "Container Runtime installed."
+
+    print_header "Install Kubernetes and Create Cluster (Automator Deployment [3/6])"
+    install-k8s
     print_subheader "Create single-node Kubernetes cluster"
     create-k8s-cluster
     print_success "Kubernetes cluster created."
 
-    print_header "Install Multus and CNI for 5G networking (Automator Deployment [4/6])"
-    print_subheader "Install Flannel as primary CNI"
+    print_header "Install Multus and CNI for 5G Networking (Automator Deployment [4/6])"
+    install-cni_components
+
+    print_header "Setup Storage for Kubernetes using OpenEBS (Automator Deployment [5/6])"
+    setup_storage
+
+    print_header "Running Post Installation Scripts (Automator Deployment [6/6])"
+    run_post_installation
+    print_success "Master node setup completed."
+}
+
+prepare_node_for_kubernetes() {
+    print_subheader "Install System Packages"
+    install-packages
+    print_success "System packages installed."
+
+    print_subheader "Setup Kubernetes Configurations for Networking"
+    disable-swap
+    disable-firewall
+    setup-k8s-networking
+    print_success "Kubernetes configurations for networking done."
+}
+
+
+install-cni_components() {
+    print_subheader "Install Flannel as Primary CNI"
     install-cni
     print_success "Flannel installed."
 
-    print_subheader "Install Multus as meta CNI"
+    print_subheader "Install Multus as Meta CNI"
     install-multus
     print_success "Multus installed."
 
-    
-    print_subheader "Install OVS-CNI as secondary CNI"
+    print_subheader "Install OVS-CNI as Secondary CNI"
     setup-ovs-cni
     print_success "OVS-CNI installed."
+}
 
-    print_header "Setup Storage for Kubernetes using OpenEBS (Automator Deployment [5/6])"
-    print_subheader "Install Helm package manager for Kubernetes"
+setup_storage() {
+    print_subheader "Install Helm Package Manager for Kubernetes"
     install-helm
     print_success "Helm installed."
+
     print_subheader "Install OpenEBS"
     install-openebs
-    print_success "OpenEBS installed"
-    
-fi
+    print_success "OpenEBS installed."
+}
 
-print_header "Running post installation scripts (Automator Deployment [6/6])"
+run_post_installation() {
+    print_subheader "Enable Running kubectl without sudo"
+    SCRIPT_DIRECTORY="$(dirname $(realpath "$0"))"
+    source $SCRIPT_DIRECTORY/run-kubectl-without-sudo.sh
 
-print_subheader "Enable running kubectl without sudo"
-SCRIPT_DIRECTORY="$(dirname $(realpath "$0"))"
-source $SCRIPT_DIRECTORY/run-kubectl-without-sudo.sh
+    print_subheader "Increase fsnotify limits for kubectl logs"
+    ./increase-fsnotify-limits.sh
+}
 
-print_subheader "Increase fsnotify limits for kubectl logs"
-./increase-fsnotify-limits.sh
+
+main "$@"
