@@ -31,7 +31,7 @@ Descriptions of the scripts in this repo are given below.
 
 - `uninstall.sh`: Reverts changes made by install.sh, removing the Kubernetes cluster and configurations.
 
-- `cleanup.sh`: Removes remants (old configuration files, CNIs) etc from previous installations of Kubernetes. Use this after `uninstall.sh` before running `install.sh` again.
+- `cleanup.sh`: Removes remants (old configuration files, CNIs, etc.) from previous installations of Kubernetes. Use this after `uninstall.sh` and before running `install.sh` again.
 
 - `worker-join-token.sh`: Run this on the **master** node to print out the command for adding worker nodes to the cluster.
 
