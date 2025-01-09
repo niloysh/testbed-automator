@@ -24,7 +24,7 @@ The `install.sh` script should take approximately 5 mintues to run to completion
 
 ![successful-deployment](images/successful-deployment.png)
 
-# Usage
+# Scripts Overview
 Descriptions of the scripts in this repo are given below.
 
 - `install.sh` : Automates the deployment of a single-node k8s cluster, configures cluster, installs various CNIs, configures ovs bridges and sets everything up for deployment of 5G core.
@@ -35,7 +35,7 @@ Descriptions of the scripts in this repo are given below.
 
 - `worker-join-token.sh`: Run this on the **master** node to print out the command for adding worker nodes to the cluster.
 
-**Note**: Run scripts as regular user with sudo permissions. Do not use **root**.
+**Note**: Run scripts as regular user with sudo permissions if needed. Do not use **root**.
 
 
 
