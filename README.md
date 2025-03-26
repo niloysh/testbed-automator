@@ -129,7 +129,7 @@ sudo ovs-vsctl del-br <bridge-name>
 - **Network Requirements**: Some components require network access (e.g., Helm, Kubernetes packages). Ensure the server can access the internet during the installation process.
 - **Resource Limits**: Verify system resources meet minimum requirements. Kubernetes installations may fail with less than the recommended CPU and RAM.
 
-For additional help, see [troubleshooting.md](troubleshooting.md)
+For additional help, see [troubleshooting.md](troubleshooting.md).
 
 # Contributing
 Contributions are welcome! Please open an issue or submit a pull request. For larger changes, open an issue first to discuss the proposed updates.
