@@ -212,15 +212,11 @@ install-helm() {
 
   if [[ "$HELM_VERSION" != *"v3"* ]]; then
     print_info "Helm 3 is not installed. Proceeding to install Helm ..."
+	
+    # use helm's script
+    # previously used the package option, but it keeps breaking ...
+    curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 
-    # Install Helm prerequisites
-    curl -s https://baltocdn.com/helm/signing.asc | gpg --dearmor | sudo tee /usr/share/keyrings/helm.gpg > /dev/null
-    sudo apt-get install apt-transport-https --yes
-
-    # Add Helm repository and install Helm
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
-    sudo apt-get update
-    sudo apt-get install helm
   else
     print_info "Helm 3 is already installed."
   fi
