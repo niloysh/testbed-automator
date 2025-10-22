@@ -254,9 +254,9 @@ setup-ovs-cni() {
   # install cluster-network-addons operator
   print_info "Installing ovs-cni ..."
 
-  kubectl apply -f https://github.com/kubevirt/cluster-network-addons-operator/releases/download/v0.89.1/namespace.yaml
-  kubectl apply -f https://github.com/kubevirt/cluster-network-addons-operator/releases/download/v0.89.1/network-addons-config.crd.yaml 
-  kubectl apply -f https://github.com/kubevirt/cluster-network-addons-operator/releases/download/v0.89.1/operator.yaml
+  kubectl apply -f https://github.com/kubevirt/cluster-network-addons-operator/releases/download/v0.101.0-rc-0/namespace.yaml
+  kubectl apply -f https://github.com/kubevirt/cluster-network-addons-operator/releases/download/v0.101.0-rc-0/network-addons-config.crd.yaml
+  kubectl apply -f https://github.com/kubevirt/cluster-network-addons-operator/releases/download/v0.101.0-rc-0/operator.yaml
 
   kubectl apply -f https://gist.githubusercontent.com/niloysh/1f14c473ebc08a18c4b520a868042026/raw/d96f07e241bb18d2f3863423a375510a395be253/network-addons-config.yaml
   
