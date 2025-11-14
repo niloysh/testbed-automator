@@ -2,7 +2,7 @@
 
 ## kudeadm init hangs
 
-Check kubelet status
+Check kubelet status:
 ```bash
 sudo systemctl status --no-pager --full kubelet.service
 ```
@@ -26,7 +26,7 @@ Reset kubeadm and cleanup remnants of previous installation, as follows:
 ```
 sudo ./cleanup.sh
 ```
-Then run `install.sh` again. It after installation, kubernetes pods show as pending, do a reboot.
+Then run `install.sh` again. If after installation, kubernetes pods show as pending, do a reboot.
 
 ## Pods Ran Out of IP Range
 
@@ -47,7 +47,7 @@ This will reset any leftover configurations. Afterward, rerun install.sh to set 
 ## Kubectl only works with sudo
 ![kubectl-sudo](images/sudo-error.png)
 
-Copy the Kubernetes admin.conf file to your home directory using
+Copy the Kubernetes admin.conf file to your home directory using:
 ```bash
 sudo ./run-kubectl-without-sudo.sh
 ```
